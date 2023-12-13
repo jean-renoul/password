@@ -1,7 +1,9 @@
 import hashlib
 import json
+import random
+import string
 
-caracteres_speciaux = "!@#$%^&*()-+?_=,<>/"
+caracteres_speciaux = string.punctuation
 
 
 def verification(mdp):
@@ -37,34 +39,59 @@ def hashage(mdp):
     return mdp_hashe
 
 def dump(i,h):
-    data = [i,h]
+    data = i,h
     with open("test.json", "r") as f:
-        data_file = json.load (f)
-        data_file.append(data)
-    with open("test.json","w") as f:
-        json.dump(data_file, f)
+        data_file = f.read()
+        if (i not in data_file) and (h not in data_file):
+            with open ("test.json", "r") as f:
+                data_file = json.load (f)
+                data_file.append(data)
+                with open("test.json","w") as f:
+                    json.dump(data_file, f)
+        else:
+            print ("Echec : le mot de passe est déja utilisé ou vous avez déja un mot de passe enregistré pour ce site")
 
 def affichage():
     with open("test.json", "r") as f:
         data = json.load(f)
         print (data)
 
+def mdp_aleatoire():
+    global mdp
+    minuscules = string.ascii_lowercase
+    majuscules = string.ascii_uppercase
+    chiffres = string.digits
+    aleatoire = minuscules + majuscules + chiffres + caracteres_speciaux
+
+    mdp = [
+        random.choice (minuscules),
+        random.choice (majuscules),
+        random.choice (chiffres),
+        random.choice (caracteres_speciaux),
+    ]
+
+    mdp.extend(random.choices(aleatoire, k=8))
+    random.shuffle(mdp)
+    mdp = "".join(mdp)
+    return mdp
+
 prompt_base = input ("Voulez vous ajouter un mot de passe ? (oui/non)")
 
 if prompt_base == "oui":
-    prompt_mdp = input ("Veuillez entrer votre mot de passe : ")
-    verification(prompt_mdp)
+    prompt_aleatoire = input ("Voulez vous créer vous même un mot de passe ou en générer un aléatoirement (perso/aléatoire)")
+    if prompt_aleatoire == "perso":
+        prompt_mdp = input ("Veuillez entrer votre mot de passe : ")
+        verification(prompt_mdp)
+        hashage(prompt_mdp)
+    elif prompt_aleatoire == "aléatoire":
+        mdp_aleatoire()
+        hashage(mdp)
 
-prompt_hashage = input("Voulez vous hasher votre mot de passe ? (oui/non)")
+    prompt_stockage = input ("Voulez vous stocker votre mot de passe ? (oui/non)")    
 
-if prompt_hashage == "oui":
-    print (hashage(prompt_mdp))
-
-prompt_stockage = input ("Voulez vous stocker votre mot de passe ? (oui/non)")
-prompt_nom_mdp = input ("Quel est le mot de passe que vous souhaitez ajouter ? ")
-
-if prompt_stockage == "oui":
-    dump(prompt_nom_mdp, mdp_hashe)
+    if prompt_stockage == "oui":
+        prompt_nom_mdp = input ("Pour quel site / machine souhaitez vous ajouter un mot de passe ? ")
+        dump(prompt_nom_mdp, mdp_hashe)
 
 prompt_affichage = input("Voulez vous afficher vos mots de passe ? (oui/non)")
 
